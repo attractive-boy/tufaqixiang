@@ -847,7 +847,9 @@ page {
   height: 100%;
   width: 100%;
   flex: 1;
-  background-color: #efefef;
+  background: linear-gradient(180deg, #F4A84E 0%, #F8C57B 55%, #FBE2B2 100%);
+  font-family: "STKaiti", "KaiTi", "Songti SC", "Georgia", serif;
+  color: #4B3A2F;
   .msg-list {
     /* height: 1px; 覆盖掉 组件内的height：100%，使得flex-grow: 1作用在容器内被撑开*/
     height: 1px !important;
@@ -857,8 +859,8 @@ page {
   .chat-foot,.disable-chat-foot{
     position: relative;
     flex-direction: column;
-    border-top: 1rpx solid #BBBBBB;
-    background-color: #F7F7F7;
+    border-top: 2rpx solid rgba(255, 255, 255, 0.7);
+    background-color: rgba(255, 255, 255, 0.9);
   }
   
   .disable-chat-foot{

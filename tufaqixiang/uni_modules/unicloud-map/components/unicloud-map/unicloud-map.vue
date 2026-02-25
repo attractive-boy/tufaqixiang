@@ -525,6 +525,9 @@
 			_regionchange(e) {
 				if (this.debug) console.log('regionchange: ', e)
 				this.$emit("regionchange", e);
+				if (this.loadtime === "manual") {
+					return;
+				}
 				if (e.detail.causedBy === "gesture") {
 					this.calcIncludePointsLastTime = Date.now();
 				}

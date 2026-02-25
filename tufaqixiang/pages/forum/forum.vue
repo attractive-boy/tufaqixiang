@@ -17,7 +17,7 @@
 			<view class="sticky-section" v-if="stickyPosts.length > 0">
 				<view class="topic-item sticky" v-for="post in stickyPosts" :key="post.id" @tap="toPostDetail(post)">
 					<view class="topic-header">
-						<image :src="post.avatar" class="user-avatar"></image>
+						<image :src="post.avatar" class="user-avatar" @tap.stop="toChat(post)"></image>
 						<view class="user-info">
 							<text class="user-name">{{ post.author }}</text>
 							<text class="post-time">{{ formatTime(post.time) }}</text>
@@ -61,7 +61,7 @@
 			<view class="posts-section">
 				<view class="topic-item" v-for="post in posts" :key="post.id" @tap="toPostDetail(post)">
 					<view class="topic-header">
-						<image :src="post.avatar" class="user-avatar"></image>
+						<image :src="post.avatar" class="user-avatar" @tap.stop="toChat(post)"></image>
 						<view class="user-info">
 							<text class="user-name">{{ post.author }}</text>
 							<text class="post-time">{{ formatTime(post.time) }}</text>
@@ -113,6 +113,8 @@
 </template>
 
 <script>
+import { searchAttractionsByName } from '@/utils/ctrip-api.js';
+
 export default {
 	data() {
 		return {
@@ -130,10 +132,11 @@ export default {
 				{
 					id: 0,
 					author: '官方运营',
-					avatar: '/static/avatar1.jpg',
+					userId: '',
+					avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '兔发骑想社区规则',
 					content: '友善、互助、分享是我们社区的核心价值。遵守以下规则可以让我们的社区更加和谐...',
-					images: ['/static/forum1.jpg'],
+					images: ['https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&h=600&q=80'],
 					likes: 5300,
 					comments: 2005,
 					shares: 201,
@@ -146,10 +149,14 @@ export default {
 				{
 					id: 1,
 					author: '骑行天使',
-					avatar: '/static/avatar2.jpg',
+					userId: '',
+					avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '2024春季骑行必备：装备清单完全版',
 					content: '春天到了，又是骑行的好季节。整理了一份完整的骑行装备清单，包括必须装备和推荐装备...',
-					images: ['/static/forum2.jpg', '/static/forum3.jpg'],
+					images: [
+						'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=900&h=600&q=80',
+						'https://images.unsplash.com/photo-1493238792000-8113da705763?auto=format&fit=crop&w=900&h=600&q=80'
+					],
 					likes: 4523,
 					comments: 1753,
 					shares: 453,
@@ -160,10 +167,11 @@ export default {
 				{
 					id: 2,
 					author: '北京自行车爱好者',
-					avatar: '/static/avatar3.jpg',
+					userId: '',
+					avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '长城骑行线路测评：北京最经典的骑行之旅',
 					content: '周末完成了长城骑行挑战，全程35km，用时2.5小时，风景绝了！路线难度适中...',
-					images: ['/static/forum4.jpg'],
+					images: ['https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=900&h=600&q=80'],
 					likes: 4523,
 					comments: 1753,
 					shares: 453,
@@ -174,7 +182,8 @@ export default {
 				{
 					id: 3,
 					author: '新手骑手',
-					avatar: '/static/avatar4.jpg',
+					userId: '',
+					avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '新人提问：如何选择合适的公路车？',
 					content: '想入坑骑行，但不知道怎么选择自行车。预算在3000-5000元，想听听各位的建议...',
 					images: [],
@@ -188,10 +197,15 @@ export default {
 				{
 					id: 4,
 					author: '骑友小王',
-					avatar: '/static/avatar5.jpg',
+					userId: '',
+					avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '我的骑行大数据：一年骑行5000km的总结',
 					content: '坚持骑行一整年，总结了很多经验。从装备、训练、营养、安全等多个方面分享...',
-					images: ['/static/forum5.jpg', '/static/forum6.jpg', '/static/forum7.jpg'],
+					images: [
+						'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&h=600&q=80',
+						'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&h=600&q=80',
+						'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&h=600&q=80'
+					],
 					likes: 4523,
 					comments: 1753,
 					shares: 453,
@@ -207,8 +221,49 @@ export default {
 	},
 	onLoad() {
 		console.log('论坛页面加载');
+		this.loadForumImages();
 	},
 	methods: {
+		async loadForumImages() {
+			this.stickyPosts = await this.attachCtripImages(this.stickyPosts);
+			this.posts = await this.attachCtripImages(this.posts);
+		},
+		async attachCtripImages(list) {
+			const updated = await Promise.all(
+				(list || []).map(async (post) => {
+					const images = await this.fetchCtripImages(post.title, 3);
+					return {
+						...post,
+						images: images.length ? images : post.images
+					};
+				})
+			);
+			return updated;
+		},
+		async fetchCtripImages(title, limit = 3) {
+			const keyword = this.pickSearchKeyword(title);
+			try {
+				const list = await searchAttractionsByName(keyword);
+				const images = (list || [])
+					.map((item) => item.image)
+					.filter((img) => typeof img === 'string' && img.length > 0);
+				return images.slice(0, limit);
+			} catch (error) {
+				console.error('获取携程图片失败:', error);
+				return [];
+			}
+		},
+		pickSearchKeyword(title) {
+			const normalized = (title || '').replace(/[^\u4e00-\u9fa5]/g, '');
+			if (normalized.length >= 4) {
+				return normalized.slice(0, 4);
+			}
+			if (normalized.length > 0) {
+				return normalized;
+			}
+			const fallback = (title || '').trim();
+			return fallback.length ? fallback.split(/\s+/)[0] : '北京';
+		},
 		onSearch() {
 			// 搜索功能
 			console.log('搜索：', this.searchKeyword);
@@ -252,6 +307,13 @@ export default {
 		},
 		toPostDetail(post) {
 			uni.showToast({ title: `查看帖子: ${post.title}`, icon: 'none' });
+		},
+		toChat(post) {
+			if (!post.userId) {
+				uni.showToast({ title: '未配置聊天用户ID', icon: 'none' });
+				return;
+			}
+			uni.navigateTo({ url: `/uni_modules/uni-im/pages/chat/chat?user_id=${post.userId}` });
 		}
 	}
 }

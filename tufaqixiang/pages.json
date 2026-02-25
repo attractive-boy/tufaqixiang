@@ -33,6 +33,12 @@
 			}
 		},
 		{
+			"path": "pages/im/chat",
+			"style": {
+				"navigationBarTitleText": "聊天"
+			}
+		},
+		{
 			"path": "pages/forum/forum",
 			"style": {
 				"navigationBarTitleText": "骑行论坛"

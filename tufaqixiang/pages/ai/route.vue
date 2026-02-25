@@ -9,41 +9,40 @@
 			</view>
 
 			<view class="tags-panel">
-				<view class="chip" v-if="categoryName">{{ categoryName }}</view>
-				<view class="chip" v-for="spot in spots" :key="spot.id">{{ spot.name }}</view>
+				<view class="category-chip" v-if="categoryName">{{ categoryName }}</view>
+				<view class="name-wrap">
+					<view class="name-chip" v-for="spot in spots" :key="spot.id">{{ spot.name }}</view>
+				</view>
 			</view>
 
 			<text class="hint-text">点击展开</text>
 		</view>
 
 		<view class="map-card">
-			<unicloud-map
+			<map
+				id="aiRouteMap"
 				class="map-view"
-				width="100%"
-				height="520rpx"
 				:longitude="mapCenter.longitude"
 				:latitude="mapCenter.latitude"
 				:markers="markers"
 				:polyline="polylines"
+				:include-points="includePoints"
 				:scale="13"
-				:show-location="true"
-				:enable-poi="true"
-				:enable-building="true"
-				loadtime="manual"
-			></unicloud-map>
+				show-location
+			></map>
 		</view>
 
 		<view class="action-panel">
 			<view class="action-btn primary" @tap="startRide">开始骑行</view>
 			<view class="action-btn" @tap="regenerateRoute">重新生成</view>
-			<image class="mascot" src="/static/logo.png" mode="aspectFit"></image>
+			<!-- <image class="mascot" src="/static/logo.png" mode="aspectFit"></image> -->
 		</view>
 	</view>
 </template>
 
 <script>
-const ROUTE_POINT_COUNT = 5;
-const AMAP_WEB_API_KEY = 'b288db5e2841b2514d833020ff718fa8';
+const ROUTE_POINT_COUNT = 3;
+const AMAP_WEB_API_KEY = 'f41daeee288fc6613e04e66d07df37a8';
 
 export default {
 	data() {
@@ -51,6 +50,7 @@ export default {
 			keyword: '',
 			categoryName: '',
 			candidates: [],
+			allSpots: [],
 			spots: [],
 			mapCenter: {
 				latitude: 39.908722,
@@ -58,6 +58,7 @@ export default {
 			},
 			markers: [],
 			polylines: [],
+			includePoints: [],
 			loading: false
 		}
 	},
@@ -66,6 +67,9 @@ export default {
 		this.categoryName = decodeURIComponent(options.category || '');
 		const stored = uni.getStorageSync('aiRouteCandidates');
 		this.candidates = Array.isArray(stored) ? stored : [];
+		this.allSpots = Array.isArray(uni.getStorageSync('aiRouteAllSpots'))
+			? uni.getStorageSync('aiRouteAllSpots')
+			: [];
 		this.generateRoute();
 	},
 	methods: {
@@ -75,7 +79,8 @@ export default {
 			uni.showLoading({ title: '生成路线中...' });
 			try {
 				await this.ensureCandidates();
-				const planned = this.pickNearbySpots(this.candidates);
+				const planned = this.pickRouteSpots();
+				console.log('[route] planned spots:', planned.map((spot) => spot.name));
 				this.spots = planned;
 				await this.buildRoute();
 			} finally {
@@ -90,6 +95,9 @@ export default {
 				this.mapCenter = location;
 				const nearby = await this.fetchNearbyLandmarks(location);
 				this.candidates = nearby;
+				if (this.allSpots.length === 0) {
+					this.allSpots = nearby;
+				}
 			} catch (error) {
 				console.error('获取附近地标失败:', error);
 				uni.showToast({ title: '获取附近地标失败', icon: 'none' });
@@ -142,25 +150,49 @@ export default {
 				longitude: Number(location[0]) || 0
 			};
 		},
-		pickNearbySpots(list) {
+		pickRouteSpots() {
+			const keyword = (this.keyword || '').trim();
+			const rawPool = this.allSpots.length > 0 ? this.allSpots : this.candidates;
+			if (!rawPool || rawPool.length === 0) {
+				return this.pickRandomSpots(this.candidates, ROUTE_POINT_COUNT);
+			}
+			const pool = rawPool.filter((spot) => spot.latitude && spot.longitude);
+			if (pool.length === 0) {
+				return this.pickRandomSpots(rawPool, ROUTE_POINT_COUNT);
+			}
+			let selected = [];
+			const baseSpot = keyword
+				? pool.find((spot) => spot.name && spot.name.includes(keyword))
+				: null;
+			if (baseSpot) {
+				this.mapCenter = { latitude: baseSpot.latitude, longitude: baseSpot.longitude };
+				const filtered = pool.filter((spot) => spot.id !== baseSpot.id);
+				const near = this.pickNearbySpots(filtered, this.mapCenter, ROUTE_POINT_COUNT - 1);
+				selected = [baseSpot, ...near];
+			} else {
+				selected = this.pickNearbySpots(pool, this.mapCenter, ROUTE_POINT_COUNT);
+			}
+			return this.fillRandomSpots(selected, pool, ROUTE_POINT_COUNT);
+		},
+		pickNearbySpots(list, center, count = ROUTE_POINT_COUNT) {
 			const candidates = (list || [])
 				.filter((spot) => spot.latitude && spot.longitude);
 			if (candidates.length === 0) {
-				return this.pickRandomSpots(list, ROUTE_POINT_COUNT);
+				return this.pickRandomSpots(list, count);
 			}
-			const center = this.mapCenter;
+			const base = center || this.mapCenter;
 			const withDistance = candidates.map((spot) => ({
 				spot,
-				distance: this.calcDistance(center, spot)
+				distance: this.calcDistance(base, spot)
 			}));
 			withDistance.sort((a, b) => a.distance - b.distance);
 			const poolSize = Math.min(
 				withDistance.length,
-				Math.max(ROUTE_POINT_COUNT * 3, ROUTE_POINT_COUNT + 4)
+				Math.max(count * 3, count + 4)
 			);
 			const pool = withDistance.slice(0, poolSize).map((item) => item.spot);
 			const shuffled = this.shuffleSpots(pool);
-			return shuffled.slice(0, Math.min(ROUTE_POINT_COUNT, shuffled.length));
+			return shuffled.slice(0, Math.min(count, shuffled.length));
 		},
 		calcDistance(a, b) {
 			if (!a || !b) return Number.MAX_VALUE;
@@ -191,16 +223,25 @@ export default {
 			}
 			return pool.slice(0, count);
 		},
+		fillRandomSpots(selected, all, count) {
+			const picked = selected.slice();
+			const usedIds = new Set(picked.map((spot) => spot.id));
+			const pool = (all || []).filter((spot) => !usedIds.has(spot.id));
+			const shuffled = this.shuffleSpots(pool);
+			return picked.concat(shuffled.slice(0, Math.max(0, count - picked.length)));
+		},
 		async buildRoute() {
 			const points = this.extractRoutePoints();
+			console.log('[route] points count:', points.length, points);
 			this.mapCenter = points[0] || this.mapCenter;
+			this.includePoints = points;
 			this.markers = points.map((point, index) => ({
 				id: index + 1,
 				latitude: point.latitude,
 				longitude: point.longitude,
-				iconPath: '/static/logo.png',
-				width: 28,
-				height: 28,
+				iconPath: '/static/icons/map-pin.svg',
+				width: 36,
+				height: 36,
 				callout: {
 					content: this.spots[index]?.name || `站点${index + 1}`,
 					color: '#4B3A2F',
@@ -227,10 +268,12 @@ export default {
 			const segments = [];
 			for (let i = 0; i < points.length - 1; i++) {
 				const segment = await this.fetchRidingSegment(points[i], points[i + 1]);
+				console.log('[route] segment', i, 'points:', segment.length);
 				if (segment.length > 0) {
 					segments.push(...segment);
 				}
 			}
+			console.log('[route] total polyline points:', segments.length);
 			if (segments.length === 0) {
 				this.polylines = [
 					{
@@ -266,10 +309,14 @@ export default {
 						key: AMAP_WEB_API_KEY
 					},
 					success: (res) => {
+						console.log('[route] riding api status:', res.statusCode, res.data?.errmsg || res.data?.errcode || 'ok');
 						const steps = res.data?.data?.paths?.[0]?.steps || [];
 						resolve(this.buildPolylineFromSteps(steps));
 					},
-					fail: () => resolve([])
+					fail: (err) => {
+						console.error('[route] riding api failed:', err);
+						resolve([]);
+					}
 				});
 			});
 		},
@@ -349,23 +396,40 @@ export default {
 }
 
 .tags-panel {
-	background: #FFF7EA;
-	border-radius: 14rpx;
-	padding: 16rpx;
+	background: rgba(255, 248, 236, 0.9);
+	border-radius: 12rpx;
+	padding: 12rpx;
 	display: flex;
-	flex-wrap: wrap;
+	align-items: flex-start;
 	gap: 12rpx;
-	border: 2rpx solid #F1D2A8;
-	box-shadow: 0 10rpx 18rpx rgba(117, 66, 23, 0.1);
+	border: 2rpx solid #F0CF9E;
+	box-shadow: 0 8rpx 16rpx rgba(117, 66, 23, 0.08);
 }
 
-.chip {
-	padding: 6rpx 16rpx;
-	border-radius: 10rpx;
-	background: #FFFFFF;
-	color: #8B6A4E;
+.category-chip {
+	padding: 8rpx 16rpx;
+	border-radius: 8rpx;
+	background: #E8B777;
+	color: #6B3F1F;
 	font-size: 22rpx;
-	border: 2rpx solid #E2C8A8;
+	border: 2rpx solid #D9A86F;
+	font-weight: 600;
+}
+
+.name-wrap {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10rpx;
+}
+
+.name-chip {
+	padding: 8rpx 18rpx;
+	border-radius: 8rpx;
+	background: #F8E7D0;
+	color: #7A5234;
+	font-size: 22rpx;
+	border: 2rpx solid #E6C59A;
+	box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.6);
 }
 
 .hint-text {

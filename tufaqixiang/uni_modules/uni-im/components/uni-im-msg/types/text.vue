@@ -87,16 +87,16 @@
 
 <style lang="scss">
   .msg-text-box {
-    border-radius: 10px;
-    background-color: #FFFFFF;
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.86);
     min-width: 30px;
     flex-shrink: 1;
     &.self{
-      background-color: #c9e7ff;
+      background-color: #7CCC66;
     }
     .msg-text {
-      padding:5px 10px;
-      font-size: 15px;
+      padding: 8px 12px;
+      font-size: 14px;
       word-break: break-all;
       cursor: text;
       /* #ifdef H5 */

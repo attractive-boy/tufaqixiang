@@ -141,6 +141,7 @@ export default {
 				uni.showToast({ title: '暂无可用景点', icon: 'none' });
 				return;
 			}
+			uni.setStorageSync('aiRouteAllSpots', this.baseSpots);
 			uni.setStorageSync('aiRouteCandidates', candidates);
 			const categoryName = this.categories[this.activeIndex]?.name || '';
 			const keyword = encodeURIComponent(this.keyword || '');
