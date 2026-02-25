@@ -54,6 +54,11 @@
         "setting" : {
             "urlCheck" : false
         },
+        "permission" : {
+            "scope.userLocation" : {
+                "desc" : "用于获取当前位置并展示附近骑行点"
+            }
+        },
         "usingComponents" : true
     },
     "mp-alipay" : {
@@ -68,5 +73,14 @@
     "uniStatistics" : {
         "enable" : false
     },
-    "vueVersion" : "3"
+    "vueVersion" : "3",
+    "h5" : {
+        "sdkConfigs" : {
+            "maps" : {
+                "tencent" : {
+                    "key" : ""
+                }
+            }
+        }
+    }
 }

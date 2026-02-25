@@ -31,6 +31,12 @@
 			"style": {
 				"navigationBarTitleText": "我的"
 			}
+		},
+		{
+			"path": "pages/map/map",
+			"style": {
+				"navigationBarTitleText": "地图服务"
+			}
 		}
 	],
 	"globalStyle": {

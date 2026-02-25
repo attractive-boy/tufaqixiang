@@ -1,403 +1,571 @@
 <template>
-	<view class="index-container">
-		<!-- 头部轮播 -->
-		<swiper class="banner-swiper" :indicator-dots="true" :autoplay="true" :duration="500">
-			<swiper-item class="banner-item" v-for="(item, index) in banners" :key="index">
-				<image :src="item" mode="aspectFill" class="banner-image"></image>
-			</swiper-item>
-		</swiper>
-
-		<!-- 搜索栏 -->
-		<view class="search-bar">
-			<view class="search-input" @tap="toSearch">
-				<text class="search-icon">🔍</text>
-				<text class="search-placeholder">搜索骑行路线</text>
-			</view>
-			<view class="filter-button" @tap="toMap">
-				<text class="filter-icon">📍</text>
-			</view>
-		</view>
-
-		<!-- 功能菜单 -->
-		<view class="function-menu">
-			<view class="menu-item" @tap="toCreateRoute">
-				<view class="menu-icon">🗺️</view>
-				<text class="menu-text">规划路线</text>
-			</view>
-			<view class="menu-item" @tap="toAIRoute">
-				<view class="menu-icon">🤖</view>
-				<text class="menu-text">AI规划</text>
-			</view>
-			<view class="menu-item" @tap="toNearby">
-				<view class="menu-icon">📍</view>
-				<text class="menu-text">附近路线</text>
-			</view>
-			<view class="menu-item" @tap="toEvents">
-				<view class="menu-icon">🎉</view>
-				<text class="menu-text">骑行活动</text>
+	<view class="home">
+		<view class="hero">
+			<swiper class="hero-swiper" :autoplay="true" :interval="3500" :duration="600" :circular="true">
+				<swiper-item class="hero-slide" v-for="(item, index) in heroImages" :key="index">
+					<image class="hero-image" :src="item" mode="aspectFill"></image>
+				</swiper-item>
+			</swiper>
+			<view class="hero-overlay">
+				<view class="hero-top">
+					<text class="brand">兔发骑想</text>
+					<!-- <view class="mini-pill">
+						<text>点击 ··· 添加我的小程序</text>
+					</view> -->
+				</view>
+				<view class="hero-text">
+					<text class="hero-title">春日去北海</text>
+					<text class="hero-sub">让我们骑着车去旅行</text>
+				</view>
 			</view>
 		</view>
 
-		<!-- 推荐路线 -->
+		<view class="card-board">
+			<view class="board-header">
+				<view class="bike-mark">
+					<text class="bike-icon">🚲</text>
+				</view>
+				<text class="board-tip">自由骑行 · 给“兔”新版本</text>
+				<!-- <view class="map-entry" @tap="toMapPage">
+					<text>地图服务</text>
+				</view> -->
+			</view>
+			<view class="action-grid">
+				<view class="action-card action-drama" @tap="toCreateRoute">
+					<text class="action-title">剧情探索</text>
+					<text class="action-sub">路线故事随心走</text>
+				</view>
+				<view class="action-card action-ai" @tap="toAIRoute">
+					<text class="action-title">AI
+						<text class="action-title-break">线路定制</text>
+					</text>
+					<text class="action-sub">一键生成专属路线</text>
+					<view class="flower">
+						<text>✿</text>
+						<text>✿</text>
+					</view>
+				</view>
+			</view>
+		</view>
+
 		<view class="section">
 			<view class="section-header">
-				<text class="section-title">🌟 精选路线</text>
+				<text class="section-title">地标评分 &gt;</text>
 				<text class="section-more" @tap="toMoreRoutes">更多</text>
 			</view>
-			<view class="routes-list">
-				<view class="route-card" v-for="(route, index) in recommendRoutes" :key="index" @tap="toRouteDetail(route)">
-					<image :src="route.image" mode="aspectFill" class="route-image"></image>
-					<view class="route-info">
-						<text class="route-name">{{ route.name }}</text>
-						<view class="route-tags">
-							<text class="route-tag">{{ route.distance }}km</text>
-							<text class="route-tag">{{ route.difficulty }}</text>
+			<view class="landmark-grid">
+				<view class="landmark-card" v-for="(item, index) in landmarks" :key="index" @tap="toRouteDetail(item)">
+					<image class="landmark-image" :src="item.image" mode="aspectFill"></image>
+					<view class="landmark-info">
+						<view class="landmark-main">
+							<text class="landmark-name">{{ item.name }}</text>
+							<text class="landmark-score">⭐ {{ item.rating }}</text>
 						</view>
-						<view class="route-stats">
-							<text class="route-stat">👥 {{ route.participants }}</text>
-							<text class="route-stat">⭐ {{ route.rating }}</text>
+						<view class="landmark-meta" v-if="item.commentCount">
+							<text class="landmark-comments">{{ item.commentCount }}条评论</text>
 						</view>
 					</view>
 				</view>
 			</view>
 		</view>
 
-		<!-- 热门话题 -->
-		<view class="section">
+		<!-- <view class="section section-plain">
 			<view class="section-header">
-				<text class="section-title">🔥 热门话题</text>
-				<text class="section-more" @tap="toForum">更多</text>
+				<text class="section-title">精选路线</text>
+				<text class="section-more" @tap="toMoreRoutes">更多</text>
 			</view>
-			<view class="topics-list">
-				<view class="topic-card" v-for="(topic, index) in hotTopics" :key="index" @tap="toTopic(topic)">
-					<text class="topic-title">{{ topic.title }}</text>
-					<text class="topic-desc">{{ topic.description }}</text>
-					<view class="topic-footer">
-						<text class="topic-count">💬 {{ topic.commentCount }}</text>
-						<text class="topic-likes">👍 {{ topic.likes }}</text>
+			<scroll-view class="route-scroll" scroll-x="true" show-scrollbar="false">
+				<view class="route-strip">
+					<view class="route-chip" v-for="(route, index) in recommendRoutes" :key="index" @tap="toRouteDetail(route)">
+						<image class="route-chip-image" :src="route.image" mode="aspectFill"></image>
+						<text class="route-chip-name">{{ route.name }}</text>
+						<text class="route-chip-meta">{{ route.distance }} km · {{ route.difficulty }}</text>
 					</view>
 				</view>
-			</view>
-		</view>
-
-		<!-- 我的进度 -->
-		<view class="section">
-			<view class="section-header">
-				<text class="section-title">📊 我的骑行进度</text>
-			</view>
-			<view class="progress-card">
-				<view class="progress-item">
-					<text class="progress-label">本月骑行</text>
-					<text class="progress-value">{{ myStats.monthDistance }} km</text>
-				</view>
-				<view class="progress-item">
-					<text class="progress-label">总骑行</text>
-					<text class="progress-value">{{ myStats.totalDistance }} km</text>
-				</view>
-				<view class="progress-item">
-					<text class="progress-label">完成路线</text>
-					<text class="progress-value">{{ myStats.completedRoutes }}</text>
-				</view>
-			</view>
-		</view>
+			</scroll-view>
+		</view> -->
 	</view>
 </template>
 
 <script>
+import { getBeijingLandmarks } from '@/utils/ctrip-api.js';
+
 export default {
 	data() {
 		return {
-			banners: [
-				'/static/banner1.jpg',
-				'/static/banner2.jpg',
-				'/static/banner3.jpg'
-			],
+			heroImages: [],
+			landmarks: [],
+			landmarksLoading: false,
 			recommendRoutes: [
 				{
 					id: 1,
 					name: '颐和园环湖骑行',
 					distance: 15,
 					difficulty: '简单',
-					participants: 2580,
-					rating: 4.8,
-					image: '/static/route1.jpg',
-					description: '环绕颐和园，享受湖光山色'
+					image: '/static/route1.png'
 				},
 				{
 					id: 2,
 					name: '北京奥森公园',
 					distance: 22,
 					difficulty: '中等',
-					participants: 3200,
-					rating: 4.6,
-					image: '/static/route2.jpg',
-					description: '城市中心的绿色骑行路线'
+					image: '/static/route2.png'
 				},
 				{
 					id: 3,
 					name: '长城脚下骑行',
 					distance: 35,
 					difficulty: '困难',
-					participants: 1580,
-					rating: 4.9,
-					image: '/static/route3.jpg',
-					description: '体验长城脚下的壮观风景'
+					image: '/static/route3.png'
 				}
-			],
-			hotTopics: [
-				{
-					id: 1,
-					title: '春季骑行安全指南',
-					description: '分享春季骑行的注意事项和装备推荐...',
-					commentCount: 234,
-					likes: 1280
-				},
-				{
-					id: 2,
-					title: '我的长城之旅',
-					description: '记录了我骑行长城脚下的精彩时刻...',
-					commentCount: 156,
-					likes: 892
-				},
-				{
-					id: 3,
-					title: '新手骑行装备选购',
-					description: '给新手的装备推荐和购买建议...',
-					commentCount: 312,
-					likes: 1560
-				}
-			],
-			myStats: {
-				monthDistance: 128,
-				totalDistance: 1280,
-				completedRoutes: 24
-			}
+			]
 		}
 	},
 	onLoad() {
-		// 初始化页面数据
 		console.log('首页加载');
+		this.loadBeijingLandmarks();
 	},
 	methods: {
-		toSearch() {
-			uni.showToast({ title: '搜索功能开发中', icon: 'none' });
+		// 加载北京地标数据（同时加载轮播图）
+		async loadBeijingLandmarks() {
+			if (this.landmarksLoading) return;
+			
+			this.landmarksLoading = true;
+			uni.showLoading({ title: '加载地标数据...' });
+			
+			try {
+				console.log('===== 开始加载北京地标数据 =====');
+				// 获取地标数据，API失败时会自动使用模拟数据
+				const landmarks = await getBeijingLandmarks(15);
+				
+				console.log('获取到的地标数量:', landmarks.length);
+				
+				if (landmarks.length === 0) {
+					throw new Error('未获取到任何地标数据');
+				}
+				
+				// 前3个用作轮播图
+				this.heroImages = landmarks.slice(0, 3)
+					.map(item => item.image)
+					.filter(img => img);
+				
+				console.log('轮播图URLs:', this.heroImages);
+				
+				// 取后面的作为地标列表（最多8个）
+				const landmarkStartIndex = 3;
+				const landmarkEndIndex = Math.min(landmarkStartIndex + 8, landmarks.length);
+				
+				this.landmarks = landmarks.slice(landmarkStartIndex, landmarkEndIndex).map((item) => ({
+					id: item.id,
+					name: item.name,
+					rating: typeof item.rating === 'number' ? item.rating.toFixed(1) : item.rating,
+					image: item.image || '/static/banner1.jpg',
+					commentCount: item.commentCount,
+					tags: item.tags ? item.tags.slice(0, 3).join(' · ') : '',
+					latitude: item.latitude,
+					longitude: item.longitude
+				}));
+				
+				console.log('===== 数据加载成功 =====');
+				console.log('轮播图数量:', this.heroImages.length);
+				console.log('地标列表数量:', this.landmarks.length);
+				console.log('地标列表示例:', this.landmarks.slice(0, 2));
+				
+				uni.showToast({ 
+					title: `加载了${this.landmarks.length}个地标`, 
+					icon: 'success',
+					duration: 1500
+				});
+			} catch (error) {
+				console.error('===== 加载数据异常 =====');
+				console.error('错误详情:', error);
+				
+				// 最后的兜底：使用一些简单的默认数据
+				this.heroImages = [
+					'/static/banner1.jpg',
+					'/static/route2.png',
+					'/static/route3.png'
+				];
+				this.landmarks = [
+					{ id: 1, name: '北海公园', rating: '4.6', image: '/static/banner1.jpg', commentCount: 8000 },
+					{ id: 2, name: '故宫博物院', rating: '4.8', image: '/static/route2.png', commentCount: 10000 },
+					{ id: 3, name: '景山公园', rating: '4.6', image: '/static/route3.png', commentCount: 5000 },
+					{ id: 4, name: '什刹海', rating: '4.4', image: '/static/route1.png', commentCount: 6000 }
+				];
+				
+				uni.showToast({ 
+					title: '使用默认数据', 
+					icon: 'none',
+					duration: 2000
+				});
+			} finally {
+				this.landmarksLoading = false;
+				uni.hideLoading();
+			}
 		},
-		toMap() {
-			uni.showToast({ title: '地图功能开发中', icon: 'none' });
+		toMapPage() {
+			uni.navigateTo({ url: '/pages/map/map' })
 		},
 		toCreateRoute() {
-			uni.showToast({ title: '路线编辑功能开发中', icon: 'none' });
+			uni.showToast({ title: '剧情探索功能开发中', icon: 'none' });
 		},
 		toAIRoute() {
-			uni.showToast({ title: 'AI规划功能开发中', icon: 'none' });
-		},
-		toNearby() {
-			uni.showToast({ title: '附近路线功能开发中', icon: 'none' });
-		},
-		toEvents() {
-			uni.showToast({ title: '骑行活动功能开发中', icon: 'none' });
+			uni.showToast({ title: 'AI线路定制功能开发中', icon: 'none' });
 		},
 		toMoreRoutes() {
 			uni.showToast({ title: '更多路线功能开发中', icon: 'none' });
 		},
 		toRouteDetail(route) {
-			uni.showToast({ title: `查看路线: ${route.name}`, icon: 'none' });
-		},
-		toForum() {
-			uni.switchTab({ url: '/pages/forum/forum' });
-		},
-		toTopic(topic) {
-			uni.showToast({ title: `查看话题: ${topic.title}`, icon: 'none' });
+			uni.showToast({ title: `查看: ${route.name}`, icon: 'none' });
 		}
 	}
 }
 </script>
 
 <style scoped>
-.index-container {
+.home {
+	--brand-cream: #FFF3E6;
+	--brand-orange: #F39A43;
+	--brand-amber: #FFC97D;
+	--brand-rose: #F7B7A3;
+	--brand-ink: #4B3A2F;
+	--brand-ink-soft: #78685C;
+	min-height: 100vh;
+	background: linear-gradient(180deg, #FCE4D7 0%, #FFF4E8 40%, #FFF9F2 100%);
+	font-family: "STKaiti", "KaiTi", "Songti SC", "Georgia", serif;
+	color: var(--brand-ink);
+	padding-bottom: 30rpx;
+}
+
+.hero {
+	position: relative;
+	width: 100%;
+	height: 360rpx;
+	overflow: hidden;
+	border-bottom-left-radius: 26rpx;
+	border-bottom-right-radius: 26rpx;
+}
+
+.hero-swiper {
+	width: 100%;
+	height: 100%;
+}
+
+.hero-slide {
+	width: 100%;
+	height: 100%;
+}
+
+.hero-image {
+	width: 100%;
+	height: 100%;
+	transform: scale(1.02);
+	animation: heroZoom 18s ease-in-out infinite;
+}
+
+.hero-overlay {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	padding: 24rpx 24rpx 30rpx;
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.05) 35%, rgba(255, 255, 255, 0.6) 100%);
+	color: #FFFFFF;
 	display: flex;
 	flex-direction: column;
-	background: #F5F5F5;
-	min-height: 100vh;
-	padding-bottom: 20rpx;
+	justify-content: space-between;
+	z-index: 2;
 }
 
-.banner-swiper {
-	width: 100%;
-	height: 300rpx;
-	margin-bottom: 0;
-}
-
-.banner-item {
-	width: 100%;
-	height: 100%;
-}
-
-.banner-image {
-	width: 100%;
-	height: 100%;
-}
-
-.search-bar {
+.hero-top {
 	display: flex;
-	gap: 10rpx;
-	padding: 20rpx;
-	background: #FFFFFF;
+	justify-content: space-between;
 	align-items: center;
-	box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }
 
-.search-input {
-	flex: 1;
+.brand {
+	font-size: 34rpx;
+	font-weight: 600;
+	letter-spacing: 2rpx;
+}
+
+.mini-pill {
+	background: rgba(138, 75, 40, 0.75);
+	padding: 10rpx 18rpx;
+	border-radius: 999rpx;
+	font-size: 20rpx;
+}
+
+.hero-text {
+	color: #FFFFFF;
+	text-shadow: 0 4rpx 14rpx rgba(0, 0, 0, 0.25);
+}
+
+.hero-title {
+	font-size: 42rpx;
+	font-weight: 600;
+	letter-spacing: 2rpx;
+}
+
+.hero-sub {
+	font-size: 26rpx;
+	margin-top: 8rpx;
+	color: rgba(255, 255, 255, 0.95);
+}
+
+.card-board {
+	margin: -60rpx 22rpx 24rpx;
+	padding: 24rpx;
+	background: var(--brand-cream);
+	border-radius: 24rpx;
+	box-shadow: 0 18rpx 40rpx rgba(120, 72, 36, 0.15);
+	border: 2rpx solid rgba(243, 154, 67, 0.2);
+	animation: floatIn 0.8s ease;
+}
+
+.board-header {
 	display: flex;
+	justify-content: space-between;
 	align-items: center;
-	background: #F5F5F5;
-	border-radius: 20rpx;
-	padding: 15rpx 20rpx;
-	gap: 10rpx;
+	margin-bottom: 18rpx;
 }
 
-.search-icon {
-	font-size: 28rpx;
-}
-
-.search-placeholder {
-	color: #999999;
-	font-size: 28rpx;
-	flex: 1;
-}
-
-.filter-button {
-	width: 60rpx;
-	height: 60rpx;
+.bike-mark {
+	width: 84rpx;
+	height: 84rpx;
+	border-radius: 50%;
+	background: #FFF;
+	border: 2rpx solid rgba(243, 154, 67, 0.35);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: #FA541C;
-	border-radius: 50%;
-	font-size: 32rpx;
 }
 
-.filter-icon {
-	font-size: 32rpx;
+.bike-icon {
+	font-size: 40rpx;
 }
 
-.function-menu {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	gap: 15rpx;
-	padding: 20rpx;
-	background: #FFFFFF;
-	margin: 0 0 20rpx 0;
-}
-
-.menu-item {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 10rpx;
-	padding: 15rpx;
-	border-radius: 10rpx;
-	background: #F5F5F5;
-	transition: all 0.3s ease;
-}
-
-.menu-item:active {
-	background: #E8E8E8;
-	transform: scale(0.95);
-}
-
-.menu-icon {
-	font-size: 48rpx;
-}
-
-.menu-text {
+.board-tip {
 	font-size: 22rpx;
-	color: #333333;
-	text-align: center;
+	color: var(--brand-ink-soft);
+	flex: 1;
+	margin-left: 12rpx;
+}
+
+.map-entry {
+	background: #FFFFFF;
+	border: 1rpx solid rgba(243, 154, 67, 0.35);
+	border-radius: 999rpx;
+	padding: 8rpx 16rpx;
+	font-size: 20rpx;
+	color: #A56433;
+}
+
+.action-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16rpx;
+}
+
+.action-card {
+	min-height: 200rpx;
+	border-radius: 20rpx;
+	padding: 20rpx;
+	color: #FFFFFF;
+	position: relative;
+	overflow: hidden;
+	box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.08);
+	transition: transform 0.25s ease;
+}
+
+.action-card:active {
+	transform: translateY(4rpx);
+}
+
+.action-drama {
+	background: linear-gradient(135deg, #F39A43 0%, #F26B2F 100%);
+}
+
+.action-ai {
+	background: linear-gradient(135deg, #F6C08A 0%, #F7A78A 100%);
+	color: #563A2B;
+}
+
+.action-title {
+	font-size: 34rpx;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.action-title-break {
+	display: block;
+}
+
+.action-sub {
+	margin-top: 12rpx;
+	font-size: 22rpx;
+	opacity: 0.9;
+}
+
+.flower {
+	position: absolute;
+	right: 16rpx;
+	bottom: 16rpx;
+	font-size: 26rpx;
+	opacity: 0.5;
 }
 
 .section {
-	margin: 0 20rpx 20rpx 20rpx;
+	margin: 0 22rpx 24rpx;
 	background: #FFFFFF;
-	border-radius: 10rpx;
-	padding: 20rpx;
+	border-radius: 20rpx;
+	padding: 22rpx;
+	box-shadow: 0 12rpx 24rpx rgba(0, 0, 0, 0.04);
+}
+
+.section-plain {
+	background: transparent;
+	box-shadow: none;
+	padding: 0 8rpx;
 }
 
 .section-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 20rpx;
-	padding-bottom: 15rpx;
-	border-bottom: 1rpx solid #F0F0F0;
+	margin-bottom: 18rpx;
 }
 
 .section-title {
-	font-size: 32rpx;
-	font-weight: bold;
-	color: #333333;
+	font-size: 28rpx;
+	font-weight: 600;
 }
 
 .section-more {
-	font-size: 24rpx;
-	color: #FA541C;
-}
-
-.routes-list {
-	display: flex;
-	flex-direction: column;
-	gap: 15rpx;
-}
-
-.route-card {
-	border: 1rpx solid #EEEEEE;
-	border-radius: 10rpx;
-	overflow: hidden;
-	display: flex;
-	height: 200rpx;
-	background: #FFFFFF;
-	transition: all 0.3s ease;
-}
-
-.route-card:active {
-	box-shadow: 0 4rpx 15rpx rgba(0, 0, 0, 0.1);
-	transform: translateY(-2rpx);
-}
-
-.route-image {
-	width: 200rpx;
-	height: 200rpx;
-	flex-shrink: 0;
-}
-
-.route-info {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	padding: 15rpx;
-}
-
-.route-name {
-	font-size: 28rpx;
-	font-weight: bold;
-	color: #333333;
-	margin-bottom: 10rpx;
-}
-
-.route-tags {
-	display: flex;
-	gap: 10rpx;
-	margin-bottom: 10rpx;
-}
-
-.route-tag {
-	background: #F0F0F0;
-	color: #666666;
 	font-size: 22rpx;
-	padding: 5rpx 10rpx;
-	border-radius: 5rpx;
+	color: #E1873E;
+}
+
+.landmark-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16rpx;
+}
+
+.landmark-card {
+	background: #FFF8F1;
+	border-radius: 16rpx;
+	overflow: hidden;
+	border: 1rpx solid rgba(243, 154, 67, 0.18);
+	transition: transform 0.25s ease;
+}
+
+.landmark-card:active {
+	transform: translateY(4rpx);
+}
+
+.landmark-image {
+	width: 100%;
+	height: 160rpx;
+}
+
+.landmark-info {
+	padding: 14rpx;
+	display: flex;
+	flex-direction: column;
+	gap: 6rpx;
+}
+
+.landmark-main {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.landmark-name {
+	font-size: 24rpx;
+	color: var(--brand-ink);
+	font-weight: 600;
+	max-width: 140rpx;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.landmark-score {
+	font-size: 22rpx;
+	color: #D67E3A;
+	font-weight: 600;
+}
+
+.landmark-meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.landmark-comments {
+	font-size: 20rpx;
+	color: var(--brand-ink-soft);
+}
+
+.route-scroll {
+	white-space: nowrap;
+	width: 100%;
+	padding-bottom: 10rpx;
+}
+
+.route-strip {
+	display: flex;
+	gap: 16rpx;
+	padding-left: 14rpx;
+}
+
+.route-chip {
+	width: 240rpx;
+	background: #FFFFFF;
+	border-radius: 16rpx;
+	box-shadow: 0 10rpx 20rpx rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+	border: 1rpx solid rgba(243, 154, 67, 0.15);
+}
+
+.route-chip-image {
+	width: 100%;
+	height: 150rpx;
+}
+
+.route-chip-name {
+	font-size: 24rpx;
+	font-weight: 600;
+	padding: 10rpx 12rpx 4rpx;
+}
+
+.route-chip-meta {
+	font-size: 20rpx;
+	color: var(--brand-ink-soft);
+	padding: 0 12rpx 12rpx;
+}
+
+@keyframes heroZoom {
+	0%, 100% {
+		transform: scale(1.02);
+	}
+	50% {
+		transform: scale(1.08);
+	}
+}
+
+@keyframes floatIn {
+	from {
+		opacity: 0;
+		transform: translateY(18rpx);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .route-stats {

@@ -2,7 +2,7 @@
 	<view class="mine-container">
 		<!-- 用户信息卡片 -->
 		<view class="user-card">
-			<image class="user-avatar" src="/image.png" mode="aspectFill"></image>
+			<image class="user-avatar" src="/static/avatar.png" mode="aspectFill"></image>
 			<view class="user-info">
 				<text class="user-name">骑行爱好者</text>
 				<text class="user-level">Lv. 8 骑行达人</text>
@@ -153,7 +153,7 @@ export default {
 			userInfo: {
 				name: '骑行爱好者',
 				level: 'Lv. 8 骑行达人',
-				avatar: '/image.png',
+				avatar: '/static/avatar.png',
 				stats: {
 					distance: 1280,
 					routes: 24,
