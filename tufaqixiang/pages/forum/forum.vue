@@ -132,7 +132,6 @@ export default {
 				{
 					id: 0,
 					author: '官方运营',
-					userId: '',
 					avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '兔发骑想社区规则',
 					content: '友善、互助、分享是我们社区的核心价值。遵守以下规则可以让我们的社区更加和谐...',
@@ -149,7 +148,6 @@ export default {
 				{
 					id: 1,
 					author: '骑行天使',
-					userId: '',
 					avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '2024春季骑行必备：装备清单完全版',
 					content: '春天到了，又是骑行的好季节。整理了一份完整的骑行装备清单，包括必须装备和推荐装备...',
@@ -167,7 +165,6 @@ export default {
 				{
 					id: 2,
 					author: '北京自行车爱好者',
-					userId: '',
 					avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '长城骑行线路测评：北京最经典的骑行之旅',
 					content: '周末完成了长城骑行挑战，全程35km，用时2.5小时，风景绝了！路线难度适中...',
@@ -182,7 +179,6 @@ export default {
 				{
 					id: 3,
 					author: '新手骑手',
-					userId: '',
 					avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '新人提问：如何选择合适的公路车？',
 					content: '想入坑骑行，但不知道怎么选择自行车。预算在3000-5000元，想听听各位的建议...',
@@ -197,7 +193,6 @@ export default {
 				{
 					id: 4,
 					author: '骑友小王',
-					userId: '',
 					avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=facearea&w=120&h=120&q=80',
 					title: '我的骑行大数据：一年骑行5000km的总结',
 					content: '坚持骑行一整年，总结了很多经验。从装备、训练、营养、安全等多个方面分享...',
@@ -309,11 +304,9 @@ export default {
 			uni.showToast({ title: `查看帖子: ${post.title}`, icon: 'none' });
 		},
 		toChat(post) {
-			if (!post.userId) {
-				uni.showToast({ title: '未配置聊天用户ID', icon: 'none' });
-				return;
-			}
-			uni.navigateTo({ url: `/uni_modules/uni-im/pages/chat/chat?user_id=${post.userId}` });
+			const name = encodeURIComponent(post.author || '骑友');
+			const avatar = encodeURIComponent(post.avatar || '');
+			uni.navigateTo({ url: `/pages/im/chat?name=${name}&avatar=${avatar}` });
 		}
 	}
 }
