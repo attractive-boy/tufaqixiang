@@ -59,7 +59,12 @@
                 "desc" : "用于获取当前位置并展示附近骑行点"
             }
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "requiredBackgroundModes": ["location"],
+        "downloadFile": {
+            "timeout": 60000,
+            "maxConcurrentCount": 10
+        }
     },
     "mp-alipay" : {
         "usingComponents" : true

@@ -3,16 +3,101 @@
  * 基于携程移动端API获取北京地标和景点信息
  */
 
-import { getMockBeijingLandmarks } from './mock-data.js';
-
-// 配置：是否使用模拟数据（true=总是用模拟数据，false=先尝试真实API）
-const USE_MOCK_DATA = false;
-
 // 携程API接口地址
 const CTRIP_POI_API = 'https://m.ctrip.com/restapi/soa2/13342/json/getSightRecreationList';
+const CTRIP_SEARCH_API = 'https://m.ctrip.com/restapi/soa2/13342/json/SearchSightRecreation';
+const CTRIP_DETAIL_API = 'https://m.ctrip.com/restapi/soa2/18254/json/getPoiMoreDetail';
 
-// 北京的城市ID（根据携程API，北京ID是9）
-const BEIJING_DISTRICT_ID = 9;
+// 北京的城市ID
+const BEIJING_DISTRICT_ID = 1;
+
+function formatPoi(poi) {
+	return {
+		id: poi.id || '',
+		poiId: poi.poiId || '',
+		name: poi.name || '',
+		eName: poi.eName || '',
+		rating: poi.commentScore || 0,
+		commentCount: poi.commentCount || 0,
+		image: poi.coverImageUrl || '',
+		price: poi.price || 0,
+		minPrice: poi.displayMinPrice || 0,
+		latitude: poi.coordInfo?.gDLat || 0,
+		longitude: poi.coordInfo?.gDLon || 0,
+		tags: [
+			...(poi.resourceTags || []),
+			...(poi.tagNameList || []),
+			...(poi.themeTags || [])
+		],
+		features: poi.shortFeatures || [],
+		address: poi.address || ''
+	};
+}
+
+function pickBestMatch(list, name) {
+	if (!list || list.length === 0) return null;
+	const exact = list.find(item => item.name === name);
+	if (exact) return exact;
+	const includes = list.find(item => item.name.includes(name) || name.includes(item.name));
+	if (includes) return includes;
+	const strong = list.find(item => item.name.replace(/-/g, '') === name);
+	return strong || list[0];
+}
+
+function pickBestMatchWithAliases(list, name, aliases = []) {
+	const pool = [name, ...aliases].filter(Boolean);
+	for (const keyword of pool) {
+		const exact = list.find(item => item.name === keyword);
+		if (exact) return exact;
+	}
+	for (const keyword of pool) {
+		const direct = list.find(item => item.name.includes(keyword));
+		if (direct) return direct;
+	}
+	for (const keyword of pool) {
+		const clean = list.find(item => item.name.replace(/-/g, '').includes(keyword));
+		if (clean) return clean;
+	}
+	return list[0] || null;
+}
+
+function formatSearchResult(item) {
+	return {
+		id: item.id || item.bizId || '',
+		poiId: item.poiId || item.bizId || '',
+		name: item.name || '',
+		eName: item.eName || '',
+		rating: item.commentScore || 0,
+		commentCount: item.commentCount || 0,
+		image: item.coverImageUrl || '',
+		price: item.price || 0,
+		minPrice: item.displayMinPrice || 0,
+		latitude: item.coordInfo?.gDLat || 0,
+		longitude: item.coordInfo?.gDLon || 0,
+		tags: [
+			...(item.resourceTags || []),
+			...(item.tagNameList || []),
+			...(item.themeTags || []),
+			...(item.tagName ? [item.tagName] : [])
+		],
+		features: item.shortFeatures || [],
+		address: item.address || ''
+	};
+}
+
+function extractDetailImage(detailData = {}) {
+	const candidates = [
+		detailData?.result?.basicInfo?.coverImageUrl,
+		detailData?.result?.basicInfo?.imageUrl,
+		detailData?.result?.basicInfo?.headImage,
+		detailData?.result?.basicInfo?.image,
+		detailData?.basicInfo?.coverImageUrl,
+		detailData?.basicInfo?.imageUrl,
+		detailData?.basicInfo?.headImage,
+		detailData?.basicInfo?.image
+	];
+	return candidates.find(url => typeof url === 'string' && url.length > 0) || '';
+}
 
 /**
  * 获取景点列表
@@ -24,7 +109,7 @@ export function getAttractionsList(options = {}) {
 		index = 1, // 页码
 		count = 20, // 每页数量
 		districtId = BEIJING_DISTRICT_ID, // 城市ID，默认北京
-		sortType = 0 // 排序类型：0-综合排序，1-人气，2-好评
+		sortType = 1 // 排序类型：0-综合排序，1-人气，2-好评
 	} = options;
 
 	const requestData = {
@@ -68,9 +153,6 @@ export function getAttractionsList(options = {}) {
 	};
 
 	return new Promise((resolve, reject) => {
-		console.log('开始请求携程API...');
-		console.log('请求参数:', { index, count, districtId, sortType });
-		
 		uni.request({
 			url: CTRIP_POI_API,
 			method: 'POST',
@@ -79,55 +161,16 @@ export function getAttractionsList(options = {}) {
 				'content-type': 'application/json'
 			},
 			success: (res) => {
-				console.log('API响应状态码:', res.statusCode);
-				console.log('API响应数据:', res.data);
-				
-				if (res.statusCode === 200) {
-					if (res.data && res.data.result) {
-						const poiList = res.data.result.sightRecreationList || [];
-						console.log('获取到景点列表，数量:', poiList.length);
-						
-						if (poiList.length === 0) {
-							console.warn('景点列表为空');
-							resolve([]);
-							return;
-						}
-						
-						// 格式化数据
-						const formattedList = poiList.map(poi => ({
-							id: poi.id || '',
-							poiId: poi.poiId || '',
-							name: poi.name || '',
-							eName: poi.eName || '',
-							rating: poi.commentScore || 0,
-							commentCount: poi.commentCount || 0,
-							image: poi.coverImageUrl || '',
-							price: poi.price || 0,
-							minPrice: poi.displayMinPrice || 0,
-							latitude: poi.coordInfo?.gDLat || 0,
-							longitude: poi.coordInfo?.gDLon || 0,
-							tags: [
-								...(poi.resourceTags || []),
-								...(poi.tagNameList || []),
-								...(poi.themeTags || [])
-							],
-							features: poi.shortFeatures || [],
-							address: poi.address || ''
-						}));
-						
-						console.log('格式化后的数据示例:', formattedList[0]);
-						resolve(formattedList);
-					} else {
-						console.error('API返回数据格式错误:', res.data);
-						reject(new Error('数据格式错误: ' + JSON.stringify(res.data)));
-					}
+				if (res.statusCode === 200 && res.data && res.data.result) {
+					const poiList = res.data.result.sightRecreationList || [];
+					// 格式化数据
+					const formattedList = poiList.map(formatPoi);
+					resolve(formattedList);
 				} else {
-					console.error('API请求失败，状态码:', res.statusCode);
-					reject(new Error('请求失败，状态码: ' + res.statusCode));
+					reject(new Error('数据格式错误'));
 				}
 			},
 			fail: (err) => {
-				console.error('API请求失败:', err);
 				reject(err);
 			}
 		});
@@ -140,59 +183,17 @@ export function getAttractionsList(options = {}) {
  * @returns {Promise} 返回地标数据
  */
 export function getBeijingLandmarks(limit = 10) {
-	// 如果配置为使用模拟数据，直接返回
-	if (USE_MOCK_DATA) {
-		console.log('配置为使用模拟数据');
-		return Promise.resolve(getMockBeijingLandmarks(limit));
-	}
-	
-	// 为了获取足够的数据，请求数量应该是limit的2-3倍
-	const requestCount = Math.max(40, limit * 2);
-	
 	return getAttractionsList({
 		index: 1,
-		count: requestCount,
+		count: 30,
 		districtId: BEIJING_DISTRICT_ID,
 		sortType: 2 // 好评排序
-	}).then(async (list) => {
-		console.log('API返回的原始数据数量:', list.length);
-		
-		// 过滤掉评分为0的
-		let filteredList = list.filter(item => item.rating > 0);
-		
-		// 如果数据不够，再请求第二页
-		if (filteredList.length < limit && list.length >= requestCount) {
-			console.log('数据不足，获取第二页...');
-			try {
-				const secondPage = await getAttractionsList({
-					index: 2,
-					count: requestCount,
-					districtId: BEIJING_DISTRICT_ID,
-					sortType: 2
-				});
-				filteredList = [...filteredList, ...secondPage.filter(item => item.rating > 0)];
-			} catch (e) {
-				console.warn('获取第二页失败:', e);
-			}
-		}
-		
-		// 如果仍然没有数据，使用模拟数据
-		if (filteredList.length === 0) {
-			console.warn('API未返回有效数据，使用模拟数据');
-			return getMockBeijingLandmarks(limit);
-		}
-		
-		// 按评分降序排序，取前limit个
-		const result = filteredList
+	}).then(list => {
+		// 过滤掉评分为0的，按评分降序排序，取前limit个
+		return list
+			.filter(item => item.rating > 0)
 			.sort((a, b) => b.rating - a.rating)
 			.slice(0, limit);
-			
-		console.log('最终返回的数据数量:', result.length);
-		return result;
-	}).catch(error => {
-		// API请求失败，使用模拟数据
-		console.error('API请求失败，切换到模拟数据:', error);
-		return getMockBeijingLandmarks(limit);
 	});
 }
 
@@ -210,14 +211,192 @@ export function getBeijingPopularSpots(limit = 10) {
 	});
 }
 
+/**
+ * 按景点名检索景点
+ * @param {String} keyword 景点关键词
+ * @param {Object} options 配置参数
+ * @returns {Promise} 返回景点数据
+ */
+export function searchAttractionsByName(keyword, options = {}) {
+	const {
+		districtId = BEIJING_DISTRICT_ID,
+		categoryId = 0
+	} = options;
+
+	const requestData = {
+		KeyWord: keyword,
+		DistrictId: districtId,
+		CategoryId: categoryId,
+		head: {
+			cid: '09031065211914680477',
+			ctok: '',
+			cver: '1.0',
+			lang: '01',
+			sid: '8888',
+			syscode: '09',
+			auth: '',
+			xsid: '',
+			extension: []
+		}
+	};
+
+	return new Promise((resolve, reject) => {
+		uni.request({
+			url: CTRIP_SEARCH_API,
+			method: 'POST',
+			data: requestData,
+			header: {
+				'content-type': 'application/json'
+			},
+			success: (res) => {
+				if (res.statusCode === 200 && res.data) {
+					const payload = res.data.sightRecreationResult || res.data.result || res.data || {};
+					const poiList = payload.sightRecreationList || payload.sightRecreationListResult || [];
+					const districtList = payload.districtResult || res.data.districtResult || [];
+					const normalized = poiList.length > 0
+						? poiList.map(formatPoi)
+						: districtList.map(formatSearchResult);
+					resolve(normalized);
+					return;
+				}
+				reject(new Error('数据格式错误'));
+			},
+			fail: (err) => {
+				reject(err);
+			}
+		});
+	});
+}
+
+/**
+ * 获取景点详情
+ * @param {String|Number} poiId 景点ID
+ * @returns {Promise} 返回详情数据
+ */
+export function getAttractionDetail(poiId) {
+	const requestData = {
+		poiId,
+		scene: 'basic',
+		head: {
+			cid: '09031065211914680477',
+			ctok: '',
+			cver: '1.0',
+			lang: '01',
+			sid: '8888',
+			syscode: '09',
+			auth: '',
+			xsid: '',
+			extension: []
+		}
+	};
+
+	return new Promise((resolve, reject) => {
+		uni.request({
+			url: CTRIP_DETAIL_API,
+			method: 'POST',
+			data: requestData,
+			header: {
+				'content-type': 'application/json'
+			},
+			success: (res) => {
+				if (res.statusCode === 200 && res.data) {
+					resolve(res.data);
+					return;
+				}
+				reject(new Error('数据格式错误'));
+			},
+			fail: (err) => {
+				reject(err);
+			}
+		});
+	});
+}
+
+/**
+ * 获取指定北京地标
+ * @param {Array} names 地标名称数组
+ * @returns {Promise} 返回地标数据
+ */
+export async function getBeijingLandmarksByNames(names = []) {
+	const nameAliases = {
+		'北海': ['北海公园'],
+		'地坛': ['地坛公园'],
+		'颐和园': ['颐和园'],
+		'什刹海': ['什刹海风景区', '什刹海'],
+		'景山': ['景山公园'],
+		'天坛': ['天坛公园']
+	};
+
+	const tasks = names.map(async (name) => {
+		try {
+			const list = await searchAttractionsByName(name, { districtId: BEIJING_DISTRICT_ID });
+			const match = pickBestMatchWithAliases(list, name, nameAliases[name]);
+			return match ? { ...match, keyword: name } : null;
+		} catch (error) {
+			return null;
+		}
+	});
+
+	const results = await Promise.all(tasks);
+	const needsFallback = results.some(item => !item || !item.image || !item.poiId);
+	let fallbackList = [];
+
+	if (needsFallback) {
+		try {
+			const pages = [1, 2, 3, 4, 5];
+			const pageTasks = pages.map(page => getAttractionsList({
+				index: page,
+				count: 80,
+				districtId: BEIJING_DISTRICT_ID,
+				sortType: 1
+			}));
+			const pageResults = await Promise.all(pageTasks);
+			fallbackList = pageResults.flat();
+		} catch (error) {
+			fallbackList = [];
+		}
+	}
+
+	const filled = results.map((item, index) => {
+		const name = names[index];
+		const fallback = pickBestMatchWithAliases(fallbackList, name, nameAliases[name]);
+		if (!fallback && item) return item;
+		if (!fallback) return null;
+		return {
+			...fallback,
+			...(item || {}),
+			image: fallback.image || (item ? item.image : ''),
+			poiId: (item && item.poiId) ? item.poiId : fallback.poiId,
+			id: (item && item.id) ? item.id : fallback.id,
+			keyword: name
+		};
+	});
+
+	const detailTasks = filled.map(async (item) => {
+		if (!item || item.image) return item;
+		const poiId = item.poiId || item.id;
+		if (!poiId) return item;
+		try {
+			const detail = await getAttractionDetail(poiId);
+			const image = extractDetailImage(detail);
+			return image ? { ...item, image } : item;
+		} catch (error) {
+			return item;
+		}
+	});
+
+	const withDetail = await Promise.all(detailTasks);
+	return withDetail.filter(Boolean);
+}
+
 // 导出城市ID常量，方便其他模块使用
 export const CITY_IDS = {
-	BEIJING: 9,      // 北京
-	SHANGHAI: 2,     // 上海
-	GUANGZHOU: 32,   // 广州
-	SHENZHEN: 30,    // 深圳
-	HANGZHOU: 14,    // 杭州
-	NANJING: 9,      // 南京（注：config.ini中显示南京ID也是9，可能需要验证）
-	CHENGDU: 28,     // 成都
-	XIAN: 45         // 西安
+	BEIJING: 1,
+	SHANGHAI: 2,
+	GUANGZHOU: 32,
+	SHENZHEN: 30,
+	HANGZHOU: 14,
+	NANJING: 9,
+	CHENGDU: 28,
+	XIAN: 45
 };

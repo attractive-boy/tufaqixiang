@@ -9,9 +9,9 @@
 			<view class="hero-overlay">
 				<view class="hero-top">
 					<text class="brand">兔发骑想</text>
-					<!-- <view class="mini-pill">
+					<view class="mini-pill">
 						<text>点击 ··· 添加我的小程序</text>
-					</view> -->
+					</view>
 				</view>
 				<view class="hero-text">
 					<text class="hero-title">春日去北海</text>
@@ -50,7 +50,7 @@
 
 		<view class="section">
 			<view class="section-header">
-				<text class="section-title">地标评分 &gt;</text>
+				<text class="section-title">北京地标评分 &gt;</text>
 				<text class="section-more" @tap="toMoreRoutes">更多</text>
 			</view>
 			<view class="landmark-grid">
@@ -88,7 +88,7 @@
 </template>
 
 <script>
-import { getBeijingLandmarks } from '@/utils/ctrip-api.js';
+import { getBeijingLandmarksByNames } from '@/utils/ctrip-api.js';
 
 export default {
 	data() {
@@ -123,10 +123,14 @@ export default {
 	},
 	onLoad() {
 		console.log('首页加载');
+		this.refreshHeroImages();
 		this.loadBeijingLandmarks();
 	},
 	methods: {
-		// 加载北京地标数据（同时加载轮播图）
+		refreshHeroImages() {
+			this.heroImages = ['/static/WechatIMG24.jpg'];
+		},
+		// 加载北京地标数据
 		async loadBeijingLandmarks() {
 			if (this.landmarksLoading) return;
 			
@@ -134,70 +138,35 @@ export default {
 			uni.showLoading({ title: '加载地标数据...' });
 			
 			try {
-				console.log('===== 开始加载北京地标数据 =====');
-				// 获取地标数据，API失败时会自动使用模拟数据
-				const landmarks = await getBeijingLandmarks(15);
-				
-				console.log('获取到的地标数量:', landmarks.length);
-				
-				if (landmarks.length === 0) {
-					throw new Error('未获取到任何地标数据');
-				}
-				
-				// 前3个用作轮播图
-				this.heroImages = landmarks.slice(0, 3)
-					.map(item => item.image)
-					.filter(img => img);
-				
-				console.log('轮播图URLs:', this.heroImages);
-				
-				// 取后面的作为地标列表（最多8个）
-				const landmarkStartIndex = 3;
-				const landmarkEndIndex = Math.min(landmarkStartIndex + 8, landmarks.length);
-				
-				this.landmarks = landmarks.slice(landmarkStartIndex, landmarkEndIndex).map((item) => ({
+				const targetNames = ['北海', '地坛', '颐和园', '什刹海', '景山', '天坛'];
+				const landmarks = await getBeijingLandmarksByNames(targetNames);
+				console.log('原始地标数据:', landmarks);
+				this.landmarks = landmarks.map((item, index) => ({
 					id: item.id,
 					name: item.name,
-					rating: typeof item.rating === 'number' ? item.rating.toFixed(1) : item.rating,
-					image: item.image || '/static/banner1.jpg',
+					rating: item.rating.toFixed(1), // 格式化评分为一位小数
+					image: item.image || '/static/banner1.jpg', // 使用真实图片或默认图片
 					commentCount: item.commentCount,
-					tags: item.tags ? item.tags.slice(0, 3).join(' · ') : '',
+					tags: item.tags.slice(0, 3).join(' · '),
 					latitude: item.latitude,
 					longitude: item.longitude
 				}));
-				
-				console.log('===== 数据加载成功 =====');
-				console.log('轮播图数量:', this.heroImages.length);
-				console.log('地标列表数量:', this.landmarks.length);
-				console.log('地标列表示例:', this.landmarks.slice(0, 2));
-				
-				uni.showToast({ 
-					title: `加载了${this.landmarks.length}个地标`, 
-					icon: 'success',
-					duration: 1500
-				});
+				console.log('地标数据加载成功:', this.landmarks);
 			} catch (error) {
-				console.error('===== 加载数据异常 =====');
-				console.error('错误详情:', error);
-				
-				// 最后的兜底：使用一些简单的默认数据
-				this.heroImages = [
-					'/static/banner1.jpg',
-					'/static/route2.png',
-					'/static/route3.png'
-				];
-				this.landmarks = [
-					{ id: 1, name: '北海公园', rating: '4.6', image: '/static/banner1.jpg', commentCount: 8000 },
-					{ id: 2, name: '故宫博物院', rating: '4.8', image: '/static/route2.png', commentCount: 10000 },
-					{ id: 3, name: '景山公园', rating: '4.6', image: '/static/route3.png', commentCount: 5000 },
-					{ id: 4, name: '什刹海', rating: '4.4', image: '/static/route1.png', commentCount: 6000 }
-				];
-				
+				console.error('获取地标数据失败:', error);
 				uni.showToast({ 
-					title: '使用默认数据', 
-					icon: 'none',
-					duration: 2000
+					title: '加载地标数据失败', 
+					icon: 'none' 
 				});
+				// 如果API失败，使用默认数据
+				this.landmarks = [
+					{ id: 1, name: '北海', rating: '4.9', image: '/static/banner1.jpg' },
+					{ id: 2, name: '地坛', rating: '4.8', image: '/static/route2.png' },
+					{ id: 3, name: '颐和园', rating: '4.8', image: '/static/route3.png' },
+					{ id: 4, name: '什刹海', rating: '4.7', image: '/static/route1.png' },
+					{ id: 5, name: '景山', rating: '4.7', image: '/static/route2.png' },
+					{ id: 6, name: '天坛', rating: '4.6', image: '/static/route3.png' }
+				];
 			} finally {
 				this.landmarksLoading = false;
 				uni.hideLoading();
@@ -369,14 +338,18 @@ export default {
 }
 
 .action-card {
-	min-height: 200rpx;
-	border-radius: 20rpx;
-	padding: 20rpx;
+	min-height: 220rpx;
+	border-radius: 12rpx;
+	padding: 20rpx 22rpx;
 	color: #FFFFFF;
 	position: relative;
 	overflow: hidden;
-	box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.08);
+	border: 2rpx solid rgba(255, 255, 255, 0.7);
+	box-shadow: none;
 	transition: transform 0.25s ease;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 }
 
 .action-card:active {
@@ -384,18 +357,18 @@ export default {
 }
 
 .action-drama {
-	background: linear-gradient(135deg, #F39A43 0%, #F26B2F 100%);
+	background: linear-gradient(180deg, #F7A13F 0%, #F28A2D 100%);
 }
 
 .action-ai {
-	background: linear-gradient(135deg, #F6C08A 0%, #F7A78A 100%);
-	color: #563A2B;
+	background: linear-gradient(180deg, #F8C9A3 0%, #F3B894 100%);
+	color: #FFFFFF;
 }
 
 .action-title {
-	font-size: 34rpx;
-	font-weight: 600;
-	line-height: 1.2;
+	font-size: 36rpx;
+	font-weight: 700;
+	line-height: 1.15;
 }
 
 .action-title-break {
@@ -403,17 +376,17 @@ export default {
 }
 
 .action-sub {
-	margin-top: 12rpx;
-	font-size: 22rpx;
+	margin-top: 6rpx;
+	font-size: 20rpx;
 	opacity: 0.9;
 }
 
 .flower {
 	position: absolute;
-	right: 16rpx;
-	bottom: 16rpx;
+	right: 12rpx;
+	bottom: 12rpx;
 	font-size: 26rpx;
-	opacity: 0.5;
+	opacity: 0.6;
 }
 
 .section {

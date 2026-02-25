@@ -3,35 +3,18 @@
 		<!-- 论坛头部 -->
 		<view class="forum-header">
 			<view class="header-top">
-				<input 
-					class="search-input"
-					type="text"
-					placeholder="搜索话题..."
-					v-model="searchKeyword"
-					@input="onSearch">
-				<button class="publish-button" @tap="toPublish">发布+</button>
-			</view>
-			
-			<!-- 分类标签 -->
-			<scroll-view class="category-scroll" scroll-x="true">
-				<view class="category-list">
-					<view 
-						class="category-item"
-						:class="{ active: activeCategory === item.id }"
-						v-for="item in categories"
-						:key="item.id"
-						@tap="selectCategory(item)">
-						{{ item.name }}
-					</view>
+				<text class="header-title">大广场</text>
+				<view class="mini-pill">
+					<text>点击 ··· 添加我的小程序</text>
+					<text class="pill-close">×</text>
 				</view>
-			</scroll-view>
+			</view>
 		</view>
 
 		<!-- 论坛内容 -->
 		<scroll-view class="forum-content" scroll-y="true" @scrolltolower="loadMore">
 			<!-- 置顶帖子 -->
 			<view class="sticky-section" v-if="stickyPosts.length > 0">
-				<view class="section-label">📌 置顶话题</view>
 				<view class="topic-item sticky" v-for="post in stickyPosts" :key="post.id" @tap="toPostDetail(post)">
 					<view class="topic-header">
 						<image :src="post.avatar" class="user-avatar"></image>
@@ -39,7 +22,6 @@
 							<text class="user-name">{{ post.author }}</text>
 							<text class="post-time">{{ formatTime(post.time) }}</text>
 						</view>
-						<view class="topic-badge">置顶</view>
 					</view>
 					<text class="topic-content">{{ post.title }}</text>
 					<view class="topic-preview">{{ post.content }}</view>
@@ -55,16 +37,28 @@
 						</view>
 					</view>
 					<view class="topic-footer">
-						<text class="topic-stat">❤️ {{ post.likes }}</text>
-						<text class="topic-stat">💬 {{ post.comments }}</text>
-						<text class="topic-stat">👁️ {{ post.views }}</text>
+						<view class="topic-stat">
+							<text class="stat-icon">❤️</text>
+							<text class="stat-count">{{ post.likes }}</text>
+						</view>
+						<view class="topic-stat">
+							<text class="stat-icon">💬</text>
+							<text class="stat-count">{{ post.comments }}</text>
+						</view>
+						<view class="topic-stat">
+							<text class="stat-icon">🔁</text>
+							<text class="stat-count">{{ post.shares }}</text>
+						</view>
+						<view class="topic-stat">
+							<text class="stat-icon">⭐</text>
+							<text class="stat-count">{{ post.favorites }}</text>
+						</view>
 					</view>
 				</view>
 			</view>
 
 			<!-- 普通帖子 -->
 			<view class="posts-section">
-				<view class="section-label" v-if="stickyPosts.length > 0">热门话题</view>
 				<view class="topic-item" v-for="post in posts" :key="post.id" @tap="toPostDetail(post)">
 					<view class="topic-header">
 						<image :src="post.avatar" class="user-avatar"></image>
@@ -87,9 +81,22 @@
 						</view>
 					</view>
 					<view class="topic-footer">
-						<text class="topic-stat">❤️ {{ post.likes }}</text>
-						<text class="topic-stat">💬 {{ post.comments }}</text>
-						<text class="topic-stat">👁️ {{ post.views }}</text>
+						<view class="topic-stat">
+							<text class="stat-icon">❤️</text>
+							<text class="stat-count">{{ post.likes }}</text>
+						</view>
+						<view class="topic-stat">
+							<text class="stat-icon">💬</text>
+							<text class="stat-count">{{ post.comments }}</text>
+						</view>
+						<view class="topic-stat">
+							<text class="stat-icon">🔁</text>
+							<text class="stat-count">{{ post.shares }}</text>
+						</view>
+						<view class="topic-stat">
+							<text class="stat-icon">⭐</text>
+							<text class="stat-count">{{ post.favorites }}</text>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -127,8 +134,10 @@ export default {
 					title: '兔发骑想社区规则',
 					content: '友善、互助、分享是我们社区的核心价值。遵守以下规则可以让我们的社区更加和谐...',
 					images: ['/static/forum1.jpg'],
-					likes: 528,
-					comments: 89,
+					likes: 5300,
+					comments: 2005,
+					shares: 201,
+					favorites: 105,
 					views: 12580,
 					time: Date.now() - 7 * 24 * 60 * 60 * 1000
 				}
@@ -141,8 +150,10 @@ export default {
 					title: '2024春季骑行必备：装备清单完全版',
 					content: '春天到了，又是骑行的好季节。整理了一份完整的骑行装备清单，包括必须装备和推荐装备...',
 					images: ['/static/forum2.jpg', '/static/forum3.jpg'],
-					likes: 1250,
-					comments: 234,
+					likes: 4523,
+					comments: 1753,
+					shares: 453,
+					favorites: 123,
 					views: 5680,
 					time: Date.now() - 2 * 60 * 60 * 1000
 				},
@@ -153,8 +164,10 @@ export default {
 					title: '长城骑行线路测评：北京最经典的骑行之旅',
 					content: '周末完成了长城骑行挑战，全程35km，用时2.5小时，风景绝了！路线难度适中...',
 					images: ['/static/forum4.jpg'],
-					likes: 892,
-					comments: 156,
+					likes: 4523,
+					comments: 1753,
+					shares: 453,
+					favorites: 123,
 					views: 4290,
 					time: Date.now() - 5 * 60 * 60 * 1000
 				},
@@ -165,8 +178,10 @@ export default {
 					title: '新人提问：如何选择合适的公路车？',
 					content: '想入坑骑行，但不知道怎么选择自行车。预算在3000-5000元，想听听各位的建议...',
 					images: [],
-					likes: 456,
-					comments: 89,
+					likes: 4523,
+					comments: 1753,
+					shares: 453,
+					favorites: 123,
 					views: 2120,
 					time: Date.now() - 8 * 60 * 60 * 1000
 				},
@@ -177,8 +192,10 @@ export default {
 					title: '我的骑行大数据：一年骑行5000km的总结',
 					content: '坚持骑行一整年，总结了很多经验。从装备、训练、营养、安全等多个方面分享...',
 					images: ['/static/forum5.jpg', '/static/forum6.jpg', '/static/forum7.jpg'],
-					likes: 2340,
-					comments: 456,
+					likes: 4523,
+					comments: 1753,
+					shares: 453,
+					favorites: 123,
 					views: 8920,
 					time: Date.now() - 12 * 60 * 60 * 1000
 				}
@@ -245,83 +262,54 @@ export default {
 	display: flex;
 	flex-direction: column;
 	height: 100vh;
-	background: #F5F5F5;
+	background: linear-gradient(180deg, #F6B36B 0%, #F7C588 45%, #F8D9A8 100%);
+	font-family: "STKaiti", "KaiTi", "Songti SC", "Georgia", serif;
 }
 
 .forum-header {
-	background: #FFFFFF;
-	padding: 15rpx;
-	border-bottom: 1rpx solid #EEEEEE;
+	background: transparent;
+	padding: 26rpx 24rpx 10rpx;
 }
 
 .header-top {
 	display: flex;
-	gap: 10rpx;
-	margin-bottom: 15rpx;
+	flex-direction: column;
+	gap: 14rpx;
 }
 
-.search-input {
-	flex: 1;
-	padding: 12rpx 15rpx;
-	background: #F5F5F5;
-	border: 1rpx solid #EEEEEE;
-	border-radius: 20rpx;
-	font-size: 28rpx;
+.header-title {
+	font-size: 40rpx;
+	font-weight: 600;
+	color: #B06B3B;
+	letter-spacing: 4rpx;
 }
 
-.publish-button {
-	width: 100rpx;
-	padding: 12rpx 0;
-	background: #FA541C;
-	color: #FFFFFF;
-	border: none;
-	border-radius: 20rpx;
-	font-size: 26rpx;
-	font-weight: bold;
-}
-
-.category-scroll {
-	white-space: nowrap;
-	width: 100%;
-}
-
-.category-list {
+.mini-pill {
+	align-self: flex-end;
+	background: rgba(124, 65, 34, 0.8);
+	color: #FFF2E8;
+	padding: 10rpx 18rpx;
+	border-radius: 999rpx;
+	font-size: 20rpx;
 	display: flex;
-	gap: 15rpx;
-	padding: 0 15rpx;
+	align-items: center;
+	gap: 10rpx;
 }
 
-.category-item {
-	display: inline-block;
-	padding: 10rpx 20rpx;
-	background: #F0F0F0;
-	color: #666666;
-	border-radius: 20rpx;
-	font-size: 26rpx;
-	white-space: nowrap;
-	transition: all 0.3s ease;
-}
-
-.category-item.active {
-	background: #FA541C;
-	color: #FFFFFF;
+.pill-close {
+	font-size: 24rpx;
+	line-height: 1;
+	opacity: 0.8;
 }
 
 .forum-content {
 	flex: 1;
 	overflow-y: auto;
+	padding-bottom: 20rpx;
 }
 
 .sticky-section {
-	padding: 15rpx 0;
-}
-
-.section-label {
-	padding: 15rpx 20rpx;
-	font-size: 24rpx;
-	color: #999999;
-	font-weight: bold;
-	background: #F5F5F5;
+	padding: 0 0 10rpx;
 }
 
 .posts-section {
@@ -329,22 +317,21 @@ export default {
 }
 
 .topic-item {
-	background: #FFFFFF;
-	margin: 10rpx 15rpx;
-	padding: 20rpx;
-	border-radius: 10rpx;
-	border-left: 4rpx solid #FA541C;
+	background: transparent;
+	margin: 16rpx 24rpx;
+	padding: 8rpx 0 18rpx;
+	border-radius: 0;
+	border-left: none;
 	transition: all 0.3s ease;
 }
 
 .topic-item.sticky {
-	border-left-color: #FF6B35;
-	background: linear-gradient(135deg, #FFF5F0 0%, #FFFFFF 100%);
+	background: transparent;
 }
 
 .topic-item:active {
-	box-shadow: 0 4rpx 15rpx rgba(0, 0, 0, 0.1);
-	transform: translateY(-2rpx);
+	transform: translateY(2rpx);
+	opacity: 0.9;
 }
 
 .topic-header {
@@ -355,10 +342,11 @@ export default {
 }
 
 .user-avatar {
-	width: 60rpx;
-	height: 60rpx;
+	width: 56rpx;
+	height: 56rpx;
 	border-radius: 50%;
 	flex-shrink: 0;
+	background: rgba(255, 255, 255, 0.6);
 }
 
 .user-info {
@@ -370,55 +358,47 @@ export default {
 
 .user-name {
 	font-size: 28rpx;
-	font-weight: bold;
-	color: #333333;
+	font-weight: 600;
+	color: #7B4B2D;
 }
 
 .post-time {
 	font-size: 22rpx;
-	color: #999999;
-}
-
-.topic-badge {
-	background: #FF6B35;
-	color: #FFFFFF;
-	font-size: 20rpx;
-	padding: 4rpx 10rpx;
-	border-radius: 4rpx;
+	color: rgba(123, 75, 45, 0.7);
 }
 
 .topic-content {
-	font-size: 32rpx;
-	font-weight: bold;
-	color: #333333;
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #7B4B2D;
 	display: block;
-	margin-bottom: 12rpx;
+	margin-bottom: 8rpx;
 	line-height: 1.4;
 }
 
 .topic-preview {
-	font-size: 26rpx;
-	color: #666666;
+	font-size: 24rpx;
+	color: rgba(123, 75, 45, 0.85);
 	line-height: 1.6;
-	margin-bottom: 12rpx;
+	margin-bottom: 10rpx;
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 2;
+	-webkit-line-clamp: 3;
 	overflow: hidden;
 }
 
 .topic-images {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 8rpx;
-	margin-bottom: 12rpx;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 10rpx;
+	margin-bottom: 10rpx;
 }
 
 .preview-image {
 	width: 100%;
-	height: 120rpx;
-	border-radius: 6rpx;
-	background: #E0E0E0;
+	height: 130rpx;
+	border-radius: 8rpx;
+	background: rgba(255, 255, 255, 0.6);
 }
 
 .more-images {
@@ -435,29 +415,37 @@ export default {
 
 .topic-footer {
 	display: flex;
-	gap: 20rpx;
+	gap: 22rpx;
 	font-size: 22rpx;
-	color: #999999;
-	border-top: 1rpx solid #F0F0F0;
-	padding-top: 12rpx;
+	color: rgba(123, 75, 45, 0.8);
+	padding-top: 6rpx;
 }
 
 .topic-stat {
 	display: flex;
 	align-items: center;
+	gap: 6rpx;
+}
+
+.stat-icon {
+	font-size: 26rpx;
+}
+
+.stat-count {
+	font-size: 22rpx;
 }
 
 .loading-tip {
 	text-align: center;
 	padding: 40rpx 20rpx;
-	color: #999999;
+	color: rgba(123, 75, 45, 0.7);
 	font-size: 26rpx;
 }
 
 .no-more-tip {
 	text-align: center;
 	padding: 40rpx 20rpx;
-	color: #CCCCCC;
+	color: rgba(123, 75, 45, 0.4);
 	font-size: 24rpx;
 }
 </style>
