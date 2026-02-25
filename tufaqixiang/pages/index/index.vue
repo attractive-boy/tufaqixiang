@@ -143,7 +143,7 @@ export default {
 				console.log('原始地标数据:', landmarks);
 				this.landmarks = landmarks.map((item, index) => ({
 					id: item.id,
-					name: item.name,
+					name: targetNames[index] || item.name,
 					rating: item.rating.toFixed(1), // 格式化评分为一位小数
 					image: item.image || '/static/banner1.jpg', // 使用真实图片或默认图片
 					commentCount: item.commentCount,
@@ -179,7 +179,7 @@ export default {
 			uni.showToast({ title: '剧情探索功能开发中', icon: 'none' });
 		},
 		toAIRoute() {
-			uni.showToast({ title: 'AI线路定制功能开发中', icon: 'none' });
+			uni.navigateTo({ url: '/pages/ai/ai' });
 		},
 		toMoreRoutes() {
 			uni.showToast({ title: '更多路线功能开发中', icon: 'none' });

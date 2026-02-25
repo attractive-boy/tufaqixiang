@@ -54,17 +54,7 @@
         "setting" : {
             "urlCheck" : false
         },
-        "permission" : {
-            "scope.userLocation" : {
-                "desc" : "用于获取当前位置并展示附近骑行点"
-            }
-        },
-        "usingComponents" : true,
-        "requiredBackgroundModes": ["location"],
-        "downloadFile": {
-            "timeout": 60000,
-            "maxConcurrentCount": 10
-        }
+        "usingComponents" : true
     },
     "mp-alipay" : {
         "usingComponents" : true
@@ -82,8 +72,10 @@
     "h5" : {
         "sdkConfigs" : {
             "maps" : {
-                "tencent" : {
-                    "key" : ""
+                "amap" : {
+                    "key" : "2a94b3fb4f7d2843ee8dd287fd1ddc6d",
+                    "securityJsCode" : "a2294f6faf0186678eb5d0ff2190a2de",
+                    "serviceHost" : ""
                 }
             }
         }

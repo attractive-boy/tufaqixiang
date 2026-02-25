@@ -109,7 +109,7 @@ export function getAttractionsList(options = {}) {
 		index = 1, // 页码
 		count = 20, // 每页数量
 		districtId = BEIJING_DISTRICT_ID, // 城市ID，默认北京
-		sortType = 1 // 排序类型：0-综合排序，1-人气，2-好评
+		sortType = 0 // 排序类型：0-综合排序，1-人气，2-好评
 	} = options;
 
 	const requestData = {
@@ -346,7 +346,7 @@ export async function getBeijingLandmarksByNames(names = []) {
 			const pages = [1, 2, 3, 4, 5];
 			const pageTasks = pages.map(page => getAttractionsList({
 				index: page,
-				count: 80,
+				count: 10,
 				districtId: BEIJING_DISTRICT_ID,
 				sortType: 1
 			}));
