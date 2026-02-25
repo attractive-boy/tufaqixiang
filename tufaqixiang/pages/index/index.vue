@@ -84,6 +84,7 @@
 				</view>
 			</scroll-view>
 		</view> -->
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 

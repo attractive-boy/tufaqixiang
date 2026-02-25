@@ -134,6 +134,7 @@
 				</button>
 			</view>
 		</view>
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 

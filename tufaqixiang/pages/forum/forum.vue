@@ -109,6 +109,7 @@
 				<text>没有更多了</text>
 			</view>
 		</scroll-view>
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 

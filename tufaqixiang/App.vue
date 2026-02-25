@@ -4,9 +4,11 @@
 			console.log('App Launch - 兔发骑想')
 			// 检查登录状态
 			this.checkLoginStatus()
+			uni.hideTabBar()
 		},
 		onShow: function() {
 			console.log('App Show')
+			uni.hideTabBar()
 		},
 		onHide: function() {
 			console.log('App Hide')

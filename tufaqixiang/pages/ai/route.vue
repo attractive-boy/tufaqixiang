@@ -37,6 +37,7 @@
 			<view class="action-btn" @tap="regenerateRoute">重新生成</view>
 			<!-- <image class="mascot" src="/static/logo.png" mode="aspectFit"></image> -->
 		</view>
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 

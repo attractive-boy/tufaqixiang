@@ -35,6 +35,7 @@
 			<view class="icon-btn">😊</view>
 			<view class="icon-btn">＋</view>
 		</view>
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 

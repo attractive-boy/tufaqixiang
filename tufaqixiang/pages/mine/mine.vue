@@ -143,6 +143,7 @@
 				<text>退出登录</text>
 			</view>
 		</view>
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 

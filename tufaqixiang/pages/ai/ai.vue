@@ -44,6 +44,7 @@
 				</view>
 			</view>
 		</view>
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 

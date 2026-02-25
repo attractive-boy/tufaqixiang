@@ -15,6 +15,7 @@
 		<view class="splash-footer">
 			<text class="footer-text">点击进入</text>
 		</view>
+		<custom-tabbar></custom-tabbar>
 	</view>
 </template>
 
